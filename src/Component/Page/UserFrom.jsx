@@ -1,20 +1,14 @@
-import React, { useRef, useState } from "react";
+import React, { useState } from "react";
 import useInputSwitch from "../hook/useInputSwitch";
 import { UploadImage } from "../hook/useUploadImage";
 
 export default function UserForm() {
   const [imageUrl, setImageUrl] = useState("");
-  const [uid, setUid] = useState(0);
-  const idRef = useRef(1);
+
 
   // Set total number of inputs including future ones
   const { Enter, handleEnter } = useInputSwitch(10);
 
-  // Auto UID
-  const createID = () => {
-    const useUid = idRef.current++;
-    setUid(useUid);
-  };
 
   // Form submit
   const handleUserInfo = (e) => {
@@ -26,6 +20,7 @@ export default function UserForm() {
     const data = Object.fromEntries(formData.entries());
 
     console.log("Form Data:", { ...data, image: imageUrl });
+
   };
 
   return (
@@ -82,9 +77,7 @@ export default function UserForm() {
               <label htmlFor="uid">UID</label>
               <input
                 type="text"
-                name="uid"
                 readOnly
-                value={uid}
                 placeholder="UID"
                 style={{
                   padding: "8px",
@@ -240,21 +233,7 @@ export default function UserForm() {
             }}
           />
 
-          {/* Notes */}
-          <label htmlFor="notes">Notes</label>
-          <textarea
-            ref={Enter(9)}
-            name="notes"
-            placeholder="Notes"
-            rows={2}
-            onKeyDown={(e) => handleEnter(e, 9)}
-            style={{
-              padding: "8px",
-              borderRadius: "5px",
-              border: "1px solid #ccc",
-            }}
-          />
-
+   
           {/* Submit */}
           <div
             style={{
@@ -265,7 +244,7 @@ export default function UserForm() {
           >
             <button
               type="submit"
-              onClick={createID}
+            
               style={{
                 padding: "10px 20px",
                 borderRadius: "5px",

@@ -4,6 +4,8 @@ import { createBrowserRouter } from "react-router";
 import UserFrom from "../Page/UserFrom";
 import Root from "../Root/Root";
 import UpDateInfo from "../Page/UpDateInfo";
+import PageError from "../Page/PageError";
+import AllUserInfo from "../Page/AllUserInfo";
 
 export const router = createBrowserRouter([
   {
@@ -15,7 +17,11 @@ export const router = createBrowserRouter([
       { path: "/update/:id",
         // loader:({params})=>
         Component: UpDateInfo },
-      { path: "/*", Component: UpDateInfo,
+     
+      { path: "/alluser", Component: AllUserInfo,
+        hydrateFallbackElement:""
+       },
+      { path: "/*", Component:PageError,
         hydrateFallbackElement:""
        },
     ],
