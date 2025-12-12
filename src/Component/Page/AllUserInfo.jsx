@@ -1,17 +1,44 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 
 export default function AllUserInfo() {
   const [users, setUsers] = useState([]);
 
-  const handleDelete = (id) => {
-    setUsers(users.filter((user) => user.id !== id));
+  // Load users every 5 seconds
+  useEffect(() => {
+    const fetchUsers = async () => {
+      try {
+        const res = await fetch("http://localhost:5000/all");
+        const data = await res.json();
+        setUsers(data);
+      } catch (err) {
+        console.log(err);
+      }
+    };
+
+    fetchUsers();
+    const interval = setInterval(fetchUsers, 5000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const handleDelete = async (id) => {
+    if (!window.confirm("Are you sure to delete this user?")) return;
+
+    try {
+      await fetch(`http://localhost:5000/delete_user/${id}`, {
+        method: "DELETE",
+      });
+
+      // Remove deleted user from state
+      setUsers(users.filter((user) => user._id !== id));
+    } catch (err) {
+      console.log("Delete error:", err);
+    }
   };
 
   return (
     <div style={{ padding: "20px" }}>
       <h2 style={{ marginBottom: "20px" }}>All Users</h2>
 
-      {/* If no users */}
       {users.length === 0 ? (
         <p
           style={{
@@ -21,7 +48,7 @@ export default function AllUserInfo() {
             marginTop: "40px",
           }}
         >
-           User Not Found
+          User Not Found
         </p>
       ) : (
         <table
@@ -33,50 +60,29 @@ export default function AllUserInfo() {
         >
           <thead>
             <tr>
-              <th style={{ padding: "10px", borderBottom: "1px solid #ccc" }}>
-                Image
-              </th>
-              <th style={{ padding: "10px", borderBottom: "1px solid #ccc" }}>
-                Name
-              </th>
-              <th style={{ padding: "10px", borderBottom: "1px solid #ccc" }}>
-                Gender
-              </th>
-              <th style={{ padding: "10px", borderBottom: "1px solid #ccc" }}>
-                Action
-              </th>
+              <th style={thStyle}>Image</th>
+              <th style={thStyle}>Name</th>
+              <th style={thStyle}>Gender</th>
+              <th style={thStyle}>Action</th>
             </tr>
           </thead>
 
           <tbody>
             {users.map((user) => (
-              <tr key={user.id}>
-                <td style={{ padding: "10px" }}>
+              <tr key={user._id}>
+                <td style={tdStyle}>
                   <img
-                    src={user.img}
+                    src={user.image}
                     alt={user.name}
                     width={50}
                     height={50}
                     style={{ borderRadius: "8px" }}
                   />
                 </td>
-
-                <td style={{ padding: "10px" }}>{user.name}</td>
-
-                <td style={{ padding: "10px" }}>{user.gender}</td>
-
-                <td style={{ padding: "10px" }}>
-                  <button
-                    onClick={() => handleDelete(user.id)}
-                    style={{
-                      padding: "6px 12px",
-                      border: "none",
-                      backgroundColor: "red",
-                      color: "white",
-                      borderRadius: "4px",
-                      cursor: "pointer",
-                    }}
-                  >
+                <td style={tdStyle}>{user.name}</td>
+                <td style={tdStyle}>{user.gender}</td>
+                <td style={tdStyle}>
+                  <button onClick={() => handleDelete(user._id)} style={btnStyle}>
                     Delete
                   </button>
                 </td>
@@ -88,3 +94,14 @@ export default function AllUserInfo() {
     </div>
   );
 }
+
+const thStyle = { padding: "10px", borderBottom: "1px solid #ccc" };
+const tdStyle = { padding: "10px" };
+const btnStyle = {
+  padding: "6px 12px",
+  border: "none",
+  backgroundColor: "red",
+  color: "white",
+  borderRadius: "4px",
+  cursor: "pointer",
+};

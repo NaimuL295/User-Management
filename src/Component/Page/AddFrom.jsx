@@ -1,26 +1,74 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import useInputSwitch from "../hook/useInputSwitch";
 import { UploadImage } from "../hook/useUploadImage";
+import { Link } from "react-router-dom";
 
-export default function UserForm() {
+export default function AddForm() {
   const [imageUrl, setImageUrl] = useState("");
+  const [users, setUsers] = useState([]); // Changed from User to users
+console.log(users);
+
+useEffect(() => {
+  const fetchUsers = async () => {
+    try {
+      const res = await fetch("http://localhost:5000/all");
+      const data = await res.json();
+      setUsers(data);
+    } catch (err) {
+      console.log(err);
+    }
+  };
+
+  fetchUsers(); 
+
+  const interval = setInterval(fetchUsers, 5000); 
+
+  return () => clearInterval(interval); 
+}, []);
 
 
   // Set total number of inputs including future ones
   const { Enter, handleEnter } = useInputSwitch(10);
 
-
   // Form submit
-  const handleUserInfo = (e) => {
+  const handleUserInfo = async (e) => {
     e.preventDefault();
-    console.log("data");
+    console.log("Submitting form...");
 
     const form = e.target;
     const formData = new FormData(form);
     const data = Object.fromEntries(formData.entries());
 
-    console.log("Form Data:", { ...data, image: imageUrl });
-
+    console.log("Form Data:", data);
+    
+    try {
+      const req = await fetch("http://localhost:5000/new_user", {
+        method: "POST",
+        body: JSON.stringify({
+          ...data,
+          image: imageUrl
+        }),
+        headers: {
+          "Content-type": "application/json; charset=UTF-8"
+        }
+      });
+      
+      const result = await req.json();
+      console.log("Response:", result);
+      
+      // Refresh users list after successful submission
+      if (req.ok) {
+        const response = await fetch("http://localhost:5000/all");
+        const updatedUsers = await response.json();
+        setUsers(updatedUsers);
+        
+        // Reset form if needed
+        form.reset();
+        setImageUrl("");
+      }
+    } catch (error) {
+      console.error("Error submitting form:", error);
+    }
   };
 
   return (
@@ -40,22 +88,38 @@ export default function UserForm() {
           padding: "20px",
           border: "1px solid #ccc",
           borderRadius: "5px",
-          maxHeight: "80vh",
+          maxHeight: "100vh",
           overflowY: "auto",
         }}
       >
-        <h2> Users List</h2>
-        <ul>{/* <Link to={$}></Link> */}</ul>
+        <h3>All Users</h3>
+        {users.length > 0 ? (
+          users.map((item, index) => (
+            <ul key={index} style={{ listStyle: "none", padding: "5px 0" }}>
+              <li>
+             <Link 
+  to={`/details/${item._id}`} 
+  style={{ color: "black", textDecoration: "none" }}
+>
+  {item.name}
+</Link>
+
+              </li>
+            </ul>
+          ))
+        ) : (
+          <p>No users found</p>
+        )}
       </div>
 
       {/* Right Column - Form */}
       <div
         style={{
-          flex: "2",
+          flex: "4",
           padding: "20px",
           border: "1px solid #ccc",
           borderRadius: "5px",
-          maxHeight: "80vh",
+          maxHeight: "100vh",
           overflowY: "auto",
         }}
       >
@@ -72,24 +136,10 @@ export default function UserForm() {
               gap: "10px",
             }}
           >
-            {/* UID */}
-            <div>
-              <label htmlFor="uid">UID</label>
-              <input
-                type="text"
-                readOnly
-                placeholder="UID"
-                style={{
-                  padding: "8px",
-                  borderRadius: "5px",
-                  border: "1px solid #ccc",
-                }}
-              />
-            </div>
-
             {/* Upload Image */}
             <div>
               <UploadImage onUpload={(url) => setImageUrl(url)} maxSizeMB={2} />
+             
             </div>
           </div>
 
@@ -109,30 +159,14 @@ export default function UserForm() {
             }}
           />
 
-          {/* Address */}
-          <label htmlFor="address">Address</label>
-          <input
-            ref={Enter(1)}
-            type="text"
-            name="address"
-            placeholder="Address"
-            onKeyDown={(e) => handleEnter(e, 1)}
-            required
-            style={{
-              padding: "8px",
-              borderRadius: "5px",
-              border: "1px solid #ccc",
-            }}
-          />
-
           {/* Phone */}
           <label htmlFor="phone">Phone Number</label>
           <input
-            ref={Enter(2)}
-            type="number"
+            ref={Enter(1)}
+            type="tel"
             name="phone"
             placeholder="Phone Number"
-            onKeyDown={(e) => handleEnter(e, 2)}
+            onKeyDown={(e) => handleEnter(e, 1)}
             required
             style={{
               padding: "8px",
@@ -144,11 +178,12 @@ export default function UserForm() {
           {/* Email */}
           <label htmlFor="email">Email</label>
           <input
-            ref={Enter(3)}
+            ref={Enter(2)}
             type="email"
             name="email"
             placeholder="Email"
-            onKeyDown={(e) => handleEnter(e, 3)}
+            onKeyDown={(e) => handleEnter(e, 2)}
+            required
             style={{
               padding: "8px",
               borderRadius: "5px",
@@ -159,19 +194,35 @@ export default function UserForm() {
           {/* Gender */}
           <label htmlFor="gender">Gender</label>
           <select
-            ref={Enter(4)}
+            ref={Enter(3)}
             name="gender"
+            onKeyDown={(e) => handleEnter(e, 3)}
+            style={{
+              padding: "8px",
+              borderRadius: "5px",
+              border: "1px solid #ccc",
+            }}
+            required
+          >
+            <option value="">Select Gender</option>
+            <option value="male">Male</option>
+            <option value="female">Female</option>
+          </select>
+
+          {/* Address */}
+          <label htmlFor="address">Address</label>
+          <textarea
+            ref={Enter(4)}
+            name="address"
+            placeholder="Address"
+            rows={3}
             onKeyDown={(e) => handleEnter(e, 4)}
             style={{
               padding: "8px",
               borderRadius: "5px",
               border: "1px solid #ccc",
             }}
-          >
-            <option value="">Select Gender</option>
-            <option value="male">Male</option>
-            <option value="female">Female</option>
-          </select>
+          />
 
           {/* Description */}
           <label htmlFor="description">Description</label>
@@ -233,7 +284,6 @@ export default function UserForm() {
             }}
           />
 
-   
           {/* Submit */}
           <div
             style={{
@@ -244,7 +294,6 @@ export default function UserForm() {
           >
             <button
               type="submit"
-            
               style={{
                 padding: "10px 20px",
                 borderRadius: "5px",
